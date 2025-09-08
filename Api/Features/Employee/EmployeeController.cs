@@ -10,7 +10,9 @@ namespace Api.Features.Employee
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class EmployeeController(IEmployeeService employeeService, IValidator<CreateEmployeeRequest> createValidator,
+    public class EmployeeController(
+        IEmployeeService employeeService,
+        IValidator<CreateEmployeeRequest> createValidator,
         IValidator<UpdateEmployeeRequest> updateValidator) : ControllerBase
     {
         private readonly IEmployeeService _employeeService = employeeService;
@@ -27,7 +29,9 @@ namespace Api.Features.Employee
 
         [HttpPost]
         [ProducesResponseType(typeof(EmployeeEntity), StatusCodes.Status201Created)]
-        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(typeof(Dictionary<string, string>), StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+
         public async Task<IActionResult> Post([FromBody] CreateEmployeeRequest request)
         {
             ValidationResult validationResult = await _createValidator.ValidateAsync(request);
@@ -42,7 +46,8 @@ namespace Api.Features.Employee
 
         [HttpPut("{id}")]
         [ProducesResponseType(typeof(EmployeeEntity), StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(typeof(Dictionary<string, string>), StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> Put(Guid id, [FromBody] UpdateEmployeeRequest request)
         {
             if (id != request.Id)
@@ -56,7 +61,7 @@ namespace Api.Features.Employee
                 return BadRequest(validationResult.ToDictionary());
             }
 
-            var result = await _employeeService.UpdateEmployee(request);
+            EmployeeEntity result = await _employeeService.UpdateEmployee(request);
             return Ok(result);
         }
 
@@ -66,7 +71,7 @@ namespace Api.Features.Employee
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<IActionResult> Delete(Guid id)
         {
-            var success = await _employeeService.DeleteEmployee(id);
+            bool success = await _employeeService.DeleteEmployee(id);
             if (!success)
             {
                 return NotFound();
