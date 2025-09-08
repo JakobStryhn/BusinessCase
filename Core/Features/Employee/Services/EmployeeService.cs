@@ -58,6 +58,23 @@ namespace Core.Features.Employee.Services
                 var employeeToUpdate = await dbContext.Employees
                     .FirstOrDefaultAsync(e => e.Id == request.Id);
 
+                var employeeToUpdateOffice = await dbContext.Offices
+                    .Include(x => x.Employees)
+                    .FirstOrDefaultAsync(x => x.Id == request.OfficeId);
+
+                if (employeeToUpdateOffice is null)
+                {
+                    throw new InvalidOperationException($"Office with ID {request.OfficeId} not found.");
+                }
+
+                if (
+                    employeeToUpdateOffice.Employees.Count >= employeeToUpdateOffice.MaxOccupancy &&
+                    employeeToUpdateOffice.Employees.FirstOrDefault(x => x.Id == request.Id) is null
+                    )
+                {
+                    throw new InvalidOperationException($"Max Occupancy reached for {employeeToUpdateOffice.Name}");
+                }
+
                 if (employeeToUpdate == null)
                 {
                     throw new InvalidOperationException($"Employee with ID {request.Id} not found.");
