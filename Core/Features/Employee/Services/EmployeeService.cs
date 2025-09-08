@@ -10,6 +10,14 @@ namespace Core.Features.Employee.Services
     {
         private readonly IDbContextFactory<DBContext> _dbContextFactory = dbContextFactory;
 
+        public async Task<List<EmployeeEntity>> GetEmployees()
+        {
+            using (var dbContext = _dbContextFactory.CreateDbContext())
+            {
+                return await dbContext.Employees.AsNoTracking().ToListAsync();
+            }
+        }
+
         public async Task<EmployeeEntity> CreateEmployee(CreateEmployeeRequest request)
         {
             EmployeeEntity employeeToCreate = new()
@@ -43,37 +51,12 @@ namespace Core.Features.Employee.Services
             return employeeToCreate;
         }
 
-
-        public async Task<bool> DeleteEmployee(Guid id)
-        {
-            using (var dbContext = _dbContextFactory.CreateDbContext())
-            {
-                var employeeToDelete = await dbContext.Employees.FirstOrDefaultAsync(e => e.Id == id);
-
-                if (employeeToDelete == null)
-                {
-                    return false;
-                }
-
-                dbContext.Employees.Remove(employeeToDelete);
-                await dbContext.SaveChangesAsync();
-                return true;
-            }
-        }
-
-        public async Task<List<EmployeeEntity>> GetEmployees()
-        {
-            using (var dbContext = _dbContextFactory.CreateDbContext())
-            {
-                return await dbContext.Employees.AsNoTracking().ToListAsync();
-            }
-        }
-
         public async Task<EmployeeEntity> UpdateEmployee(UpdateEmployeeRequest request)
         {
             using (var dbContext = _dbContextFactory.CreateDbContext())
             {
-                var employeeToUpdate = await dbContext.Employees.FirstOrDefaultAsync(e => e.Id == request.Id);
+                var employeeToUpdate = await dbContext.Employees
+                    .FirstOrDefaultAsync(e => e.Id == request.Id);
 
                 if (employeeToUpdate == null)
                 {
@@ -86,6 +69,24 @@ namespace Core.Features.Employee.Services
 
                 await dbContext.SaveChangesAsync();
                 return employeeToUpdate;
+            }
+        }
+
+        public async Task<bool> DeleteEmployee(Guid id)
+        {
+            using (var dbContext = _dbContextFactory.CreateDbContext())
+            {
+                var employeeToDelete = await dbContext.Employees
+                    .FirstOrDefaultAsync(e => e.Id == id);
+
+                if (employeeToDelete is null)
+                {
+                    return false;
+                }
+
+                dbContext.Employees.Remove(employeeToDelete);
+                await dbContext.SaveChangesAsync();
+                return true;
             }
         }
     }

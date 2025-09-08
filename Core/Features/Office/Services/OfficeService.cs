@@ -11,6 +11,14 @@ namespace Core.Features.Office.Services
     {
         private readonly IDbContextFactory<DBContext> _dbContextFactory = dbContextFactory;
 
+        public async Task<List<OfficeEntity>> GetOffices()
+        {
+            using (var dbContext = _dbContextFactory.CreateDbContext())
+            {
+                return await dbContext.Offices.Include(x => x.Employees).AsNoTracking().ToListAsync();
+            }
+        }
+
         public async Task<OfficeEntity> CreateOffice(CreateOfficeRequest request)
         {
             OfficeEntity officetoCreate = new()
@@ -32,9 +40,10 @@ namespace Core.Features.Office.Services
         {
             using (var dbContext = _dbContextFactory.CreateDbContext())
             {
-                var employeeToDelete = await dbContext.Employees.FirstOrDefaultAsync(e => e.Id == id);
+                var employeeToDelete = await dbContext.Employees
+                    .FirstOrDefaultAsync(e => e.Id == id);
 
-                if (employeeToDelete == null)
+                if (employeeToDelete is null)
                 {
                     return false;
                 }
@@ -45,13 +54,7 @@ namespace Core.Features.Office.Services
             }
         }
 
-        public async Task<List<OfficeEntity>> GetOffices()
-        {
-            using (var dbContext = _dbContextFactory.CreateDbContext())
-            {
-                return await dbContext.Offices.Include(x => x.Employees).AsNoTracking().ToListAsync();
-            }
-        }
+
 
         public async Task<OfficeEntity> UpdateOffice(UpdateOfficeRequest request)
         {
@@ -59,7 +62,7 @@ namespace Core.Features.Office.Services
             {
                 var officeToUpdate = await dbContext.Offices.FirstOrDefaultAsync(e => e.Id == request.Id);
 
-                if (officeToUpdate == null)
+                if (officeToUpdate is null)
                 {
                     throw new InvalidOperationException($"Office with ID {request.Id} not found.");
                 }
